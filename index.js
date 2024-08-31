@@ -18,6 +18,8 @@ const PORT = 3002;
 const wss = new WebSocket.Server({ port: 3003 });
 
 const clients = new Map();
+const DISCONNECT_TIMEOUT = 60000; // 1 minute in milliseconds
+
 
 
 wss.on('connection', (ws) => {
@@ -27,6 +29,12 @@ wss.on('connection', (ws) => {
 
   clients.set(authCode, ws);
   ws.send(JSON.stringify({status: 'authCode', authCode: authCode }));
+
+  const disconnectTimeout = setTimeout(() => {
+    console.log('Disconnecting client due to inactivity:', authCode);
+    ws.close(); // Close the WebSocket connection
+    clients.delete(authCode); // Remove the client from the map
+}, DISCONNECT_TIMEOUT);
 
   ws.on('close', () => {
     console.log('Client disconnected');
